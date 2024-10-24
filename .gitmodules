@@ -1,0 +1,3 @@
+[submodule "tagger"]
+	path = tagger
+	url = https://github.com/badde57/wd14-tagger-standalone.git
