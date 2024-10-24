@@ -1,0 +1,14 @@
+name: deepdanbooru
+description: Extract tags from scene
+version: '1.0.0'
+url: https://github.com/badde57/stashapp-deepdanbooru
+exec:
+  - python
+  - "{pluginDir}/deepdanbooru.py"
+  - "{pluginDir}/../../../meta.sqlite"
+interface: raw
+tasks:
+  - name: Deepdanbooru extract scenes
+    description: Extract Deepdanbooru tags and embeddings from scenes
+    defaultArgs:
+      mode: catchup
