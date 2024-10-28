@@ -6,12 +6,13 @@ Frame tagging.
 
 ## How to configure the plugin
 
-0. Install requirements: `pip install -r requirements.txt`. Briefly, it's
-   opencv, stashapp-tools, perception, and their respective dependencies.
+0. Install requirements: `pip install -r requirements.txt`. At a high level,
+   it's deepdanbooru, huggingface-hub, and onnxruntime-gpu.
+
    Tested with Python 3.10
 
 1. Create a database for storing tags:
-  ```
+```
   echo "
     CREATE TABLE deepdanbooru (
       endpoint TEXT NOT NULL,
@@ -23,5 +24,5 @@ Frame tagging.
       method TEXT NOT NULL,
       UNIQUE (stash_id, method, time_offset)
     );
-  " | sqlite3 /path/to/face.sqlite
-  ```
+  " | sqlite3 /path/to/meta.sqlite
+```
