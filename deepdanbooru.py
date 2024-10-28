@@ -63,46 +63,45 @@ def catchup():
     log.info(str(count)+' scenes to extract tags.')
     i=0
     for r in range(1,count+1):
-        log.info('fetching data: %s - %s %0.1f%%' % ((r - 1) * 1,r,(i/count)*100,))
+        #log.info('fetching data: %s - %s %0.1f%%' % ((r - 1) * 1,r,(i/count)*100,))
+        scenes=stash.find_scenes(f=f,filter={"page":r, "per_page": 1})
 #        scenes=stash.find_scenes(f=f,filter={"page":r, "per_page": 1, "sort": "duration", "direction": "ASC"})
-        scenes=stash.find_scenes(f=f,filter={"page":r, "per_page": 1, "sort": "title", "direction": "ASC"})
+#        scenes=stash.find_scenes(f=f,filter={"page":r, "per_page": 1, "sort": "title", "direction": "ASC"})
+
         for s in scenes:
-            if "stash_ids" not in s.keys() or len(s["stash_ids"]) != 1:
-                log.error(f"Scene {s['id']} must have exactly one stash_id, skipping...")
+            if "stash_ids" not in s.keys():
+                log.error(f"Scene {s['id']} must have stash_id, skipping...")
                 continue
+            elif len(s['files']) != 1:
+                log.error(f"Scene {s['id']} must have exactly one file, skipping...")
+                continue
+
             result = checktags(s)
-            #processScene(s)
             i=i+1
             log.progress((i/count))
-            #time.sleep(2)
 
 def checktags(scene):
+    file = scene['files'][0]
+    scene_id = scene['id']
+    path = file['path']
+    file_id = file['id']
+    fps = float(file['frame_rate'])
+    dur = float(file['duration'])
+    total_frames = int(dur * fps)
+    #log.debug(f'processing {scene_id=}...')
+    endpoint = scene['stash_ids'][0]['endpoint']
+    stash_id = scene['stash_ids'][0]['stash_id']
 
-    if len(scene['files']) != 1:
-        log.error(f"Scene {s['id']} must have exactly one file, skipping...")
+    cur = con.cursor()
+    cur.execute("SELECT 1 FROM deepdanbooru WHERE endpoint = ? AND stash_id = ?",(endpoint, stash_id,))
+    rows = cur.fetchall()
+    if len(rows) > 0:
+        log.info(f"deepdanbooru - skipping {scene_id=}, already processed")
         return
 
-    for file in scene['files']:
-        scene_id = scene['id']
-        path = file['path']
-        file_id = file['id']
-        fps = float(file['frame_rate'])
-        dur = float(file['duration'])
-        total_frames = int(dur * fps)
-        log.debug(f'processing {scene_id=}...')
-        endpoint = scene['stash_ids'][0]['endpoint']
-        stash_id = scene['stash_ids'][0]['stash_id']
-
-        cur = con.cursor()
-        cur.execute("SELECT 1 FROM deepdanbooru WHERE endpoint = ? AND stash_id = ?",(endpoint, stash_id,))
-        rows = cur.fetchall()
-        if len(rows) > 0:
-            log.info(f"deepdanbooru - skipping {scene_id=}, already processed")
-            continue
-
-        process_video(path, endpoint, stash_id)
-        log.debug(f"deepdanbooru - finished {scene_id=}")
-        return con.commit()
+    process_video(path, endpoint, stash_id)
+    log.debug(f"deepdanbooru - finished {scene_id=}")
+    return con.commit()
 
 def numpy_to_python(obj):
     if isinstance(obj, np.integer):
@@ -147,7 +146,7 @@ def process_video(video_path, endpoint, stash_id, frequency=2):
                     tags = json.dumps(ddb['tags'])
                     ratings = json.dumps(ddb['ratings'])
                     embedding = json.dumps(ddb['embedding'].tolist() if isinstance(ddb['embedding'], np.ndarray) else ddb['embedding'])
-                    log.info(f"{stash_id=} {time_offset=} {','.join(ddb['tags'].keys())}")
+                    #log.info(f"{stash_id=} {time_offset=} {','.join(ddb['tags'].keys())}")
                     cur.execute('INSERT INTO deepdanbooru (endpoint, stash_id, time_offset, tags, ratings, embedding, method) VALUES (?,?,?,?,?,?,?)',
                             (endpoint, stash_id, time_offset, tags, ratings, embedding, METHOD,)
                             )
@@ -174,7 +173,7 @@ def main():
 
     global con
     ddb_db_path = sys.argv[1]
-    log.info(ddb_db_path)
+    log.info(f"{ddb_db_path=}")
     con = sqlite3.connect(ddb_db_path)
 
     try:
