@@ -3,7 +3,7 @@ import sys
 import json
 import sqlite3
 
-METHOD = 'deepdanbooru-1.0.0'
+METHOD = 'deepdanbooru-1.0.1'
 
 try:
     import stashapi.log as log

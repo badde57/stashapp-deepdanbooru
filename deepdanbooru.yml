@@ -1,6 +1,6 @@
 name: deepdanbooru
 description: Extract tags from scene
-version: '1.0.0'
+version: '1.0.1'
 url: https://github.com/badde57/stashapp-deepdanbooru
 exec:
   - python
